@@ -536,18 +536,26 @@ module.exports = {
                 }.`
               );
               continue;
+            } else {
+              entry.response = params;
+              debug(
+                `SSL or CERT Error found by Chrome: requestId ${
+                  params.requestId
+                }.`
+              );
+              continue;
             }
 
-            // This could be due to incorrect domain name etc. Sad, but unfortunately not something that a HAR file can
-            // represent.
-            debug(
-              `Failed to load url '${entry.request.url}' (canceled: ${
-                params.canceled
-              })`
-            );
-            entries = entries.filter(
-              entry => entry._requestId !== params.requestId
-            );
+            // // This could be due to incorrect domain name etc. Sad, but unfortunately not something that a HAR file can
+            // // represent.
+            // debug(
+            //   `Failed to load url '${entry.request.url}' (canceled: ${
+            //     params.canceled
+            //   })`
+            // );
+            // entries = entries.filter(
+            //   entry => entry._requestId !== params.requestId
+            // );
           }
           break;
 
