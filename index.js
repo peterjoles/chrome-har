@@ -48,8 +48,7 @@ function populateRedirectResponse(page, params, entries, options) {
     );
   } else {
     debug(
-      `Couldn't find original request for redirect response: ${
-        params.requestId
+      `Couldn't find original request for redirect response: ${params.requestId
       }`
     );
   }
@@ -226,8 +225,7 @@ module.exports = {
 
             if (!page) {
               debug(
-                `Request will be sent with requestId ${
-                  params.requestId
+                `Request will be sent with requestId ${params.requestId
                 } that can't be mapped to any page at the moment.`
               );
               // ignoredRequests.add(params.requestId);
@@ -264,8 +262,7 @@ module.exports = {
             );
             if (!entry) {
               debug(
-                `Received requestServedFromCache for requestId ${
-                  params.requestId
+                `Received requestServedFromCache for requestId ${params.requestId
                 } with no matching request.`
               );
               continue;
@@ -291,8 +288,7 @@ module.exports = {
             );
             if (!entry) {
               debug(
-                `Extra info sent for requestId ${
-                  params.requestId
+                `Extra info sent for requestId ${params.requestId
                 } with no matching request.`
               );
               continue;
@@ -337,8 +333,7 @@ module.exports = {
 
             if (!entry) {
               debug(
-                `Received response extra info for requestId ${
-                  params.requestId
+                `Received response extra info for requestId ${params.requestId
                 } with no matching request.`
               );
               continue;
@@ -385,8 +380,7 @@ module.exports = {
 
             if (!entry) {
               debug(
-                `Received network response for requestId ${
-                  params.requestId
+                `Received network response for requestId ${params.requestId
                 } with no matching request.`
               );
               continue;
@@ -399,8 +393,7 @@ module.exports = {
               pages[pages.length - 1];
             if (!page) {
               debug(
-                `Received network response for requestId ${
-                  params.requestId
+                `Received network response for requestId ${params.requestId
                 } that can't be mapped to any page.`
               );
               continue;
@@ -436,8 +429,7 @@ module.exports = {
             );
             if (!entry) {
               debug(
-                `Received network data for requestId ${
-                  params.requestId
+                `Received network data for requestId ${params.requestId
                 } with no matching request.`
               );
               continue;
@@ -485,8 +477,7 @@ module.exports = {
             );
             if (!entry) {
               debug(
-                `Network loading finished for requestId ${
-                  params.requestId
+                `Network loading finished for requestId ${params.requestId
                 } with no matching request.`
               );
               continue;
@@ -557,8 +548,7 @@ module.exports = {
             );
             if (!entry) {
               debug(
-                `Network loading failed for requestId ${
-                  params.requestId
+                `Network loading failed for requestId ${params.requestId
                 } with no matching request.`
               );
               continue;
@@ -567,16 +557,14 @@ module.exports = {
             if (params.errorText === 'net::ERR_ABORTED') {
               finalizeEntry(entry, params);
               debug(
-                `Loading was canceled due to Chrome or a user action for requestId ${
-                  params.requestId
+                `Loading was canceled due to Chrome or a user action for requestId ${params.requestId
                 }.`
               );
               continue;
             } else {
               entry.response = params;
               debug(
-                `SSL or CERT Error found by Chrome: requestId ${
-                  params.requestId
+                `SSL or CERT Error found by Chrome: requestId ${params.requestId
                 }.`
               );
               continue;
@@ -603,8 +591,7 @@ module.exports = {
 
             if (!entry) {
               debug(
-                `Received resourceChangedPriority for requestId ${
-                  params.requestId
+                `Received resourceChangedPriority for requestId ${params.requestId
                 } with no matching request.`
               );
               continue;
@@ -637,14 +624,17 @@ module.exports = {
       return o;
     };
 
-    entries = entries
-      .filter(entry => {
-        if (!entry.response) {
-          debug(`Dropping incomplete request: ${entry.request.url}`);
-        }
-        return entry.response;
-      })
-      .map(deleteInternalProperties);
+    // entries = entries
+    //   .filter(entry => {
+    //     if (!entry.response) {
+    //       debug(`Dropping incomplete request: ${entry.request.url}`);
+    //     }
+    //     return entry.response;
+    //   })
+    //   .map(deleteInternalProperties);
+
+    entries = entries.map(deleteInternalProperties);
+
     pages = pages.map(deleteInternalProperties);
     pages = pages.reduce((result, page, index) => {
       const hasEntry = entries.some(entry => entry.pageref === page.id);
