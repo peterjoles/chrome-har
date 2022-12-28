@@ -34,6 +34,27 @@ function addFromFirstRequest(page, params) {
   }
 }
 
+function populateRedirectResponse(page, params, entries, options) {
+  const previousEntry = entries.find(
+    entry => entry._requestId === params.requestId
+  );
+  if (previousEntry) {
+    previousEntry._requestId += 'r';
+    populateEntryFromResponse(
+      previousEntry,
+      params.redirectResponse,
+      page,
+      options
+    );
+  } else {
+    debug(
+      `Couldn't find original request for redirect response: ${
+        params.requestId
+      }`
+    );
+  }
+}
+
 module.exports = {
   harFromMessages(messages, options) {
     options = Object.assign({}, defaultOptions, options);
@@ -59,7 +80,7 @@ module.exports = {
 
       switch (method) {
         case 'Page.frameStartedLoading':
-        case 'Page.frameScheduledNavigation':
+        case 'Page.frameRequestedNavigation':
         case 'Page.navigatedWithinDocument':
           {
             const frameId = params.frameId;
@@ -86,7 +107,15 @@ module.exports = {
               }
               entries = entries.concat(entriesWithoutPage);
               addFromFirstRequest(page, paramsWithoutPage[0]);
+
+              // Add unmapped redirects
+              for (let params of paramsWithoutPage) {
+                if (params.redirectResponse) {
+                  populateRedirectResponse(page, params, entries, options);
+                }
+              }
             }
+
             if (responsesWithoutPage.length > 0) {
               for (let params of responsesWithoutPage) {
                 let entry = entries.find(
@@ -143,6 +172,10 @@ module.exports = {
               headers: parseHeaders(request.headers)
             };
 
+            if (request.isLinkPreload) {
+              req._isLinkPreload = true;
+            }
+
             const entry = {
               cache: {},
               startedDateTime: '',
@@ -156,7 +189,9 @@ module.exports = {
               request: req,
               time: 0,
               _initiator_detail: JSON.stringify(params.initiator),
-              _initiator_type: params.initiator.type
+              _initiator_type: params.initiator.type,
+              // Chrome's DevTools Frontend returns this field in lower case
+              _resourceType: params.type ? params.type.toLowerCase() : null
             };
 
             // The object initiator change according to its type
@@ -186,24 +221,7 @@ module.exports = {
             }
 
             if (params.redirectResponse) {
-              const previousEntry = entries.find(
-                entry => entry._requestId === params.requestId
-              );
-              if (previousEntry) {
-                previousEntry._requestId += 'r';
-                populateEntryFromResponse(
-                  previousEntry,
-                  params.redirectResponse,
-                  page,
-                  options
-                );
-              } else {
-                debug(
-                  `Couldn't find original request for redirect response: ${
-                    params.requestId
-                  }`
-                );
-              }
+              populateRedirectResponse(page, params, entries, options);
             }
 
             if (!page) {
@@ -429,6 +447,24 @@ module.exports = {
             // https://github.com/sitespeedio/sitespeed.io/issues/2645
             if (entry.response) {
               entry.response.content.size += params.dataLength;
+            }
+
+            const page = pages.find(page => page.id === entry.pageref);
+
+            if (entry._chunks && page) {
+              entry._chunks.push({
+                ts: formatMillis((params.timestamp - page.__timestamp) * 1000),
+                bytes: params.dataLength
+              });
+            } else if (page) {
+              entry._chunks = [
+                {
+                  ts: formatMillis(
+                    (params.timestamp - page.__timestamp) * 1000
+                  ),
+                  bytes: params.dataLength
+                }
+              ];
             }
           }
           break;

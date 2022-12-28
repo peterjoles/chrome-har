@@ -111,6 +111,25 @@ test('Parses IPv6 address', t => {
   );
 });
 
+test('Forwards the resource type value', t => {
+  const perflogPath = perflog('www.google.ru.json');
+  const expected = {
+    document: 1,
+    image: 27,
+    other: 4,
+    script: 8,
+    xhr: 1
+  };
+  return parsePerflog(perflogPath).then(har => {
+    const collected = har.log.entries.map(x => x._resourceType);
+    t.true(
+      Object.entries(expected).every(
+        ([key, value]) => collected.filter(x => x == key).length == value
+      )
+    );
+  });
+});
+
 test('navigatedWithinDocument', t => {
   const perflogPath = perflog('navigatedWithinDocument.json');
   return parsePerflog(perflogPath)
@@ -232,4 +251,13 @@ test('Excludes response blocked cookies', t => {
       );
       t.is(request.response.cookies.length, 1);
     });
+});
+
+test('Includes initial redirect', t => {
+  const perflogPath = perflog('www.vercel.com.json');
+  return parsePerflog(perflogPath)
+    .then(har => har.log)
+    .tap(log => t.is(log.pages.length, 1))
+    .tap(log => t.is(log.entries.length, 99))
+    .tap(log => t.is(log.entries[0].response.status, 308));
 });
